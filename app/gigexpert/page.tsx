@@ -6,7 +6,6 @@ import { gigExpertFeedbackApi } from '../../lib/api';
 import { GigExpertFeedback, ApplicationStatus } from '../../lib/types';
 import { downloadCSV, triggerPrint } from '../../lib/exportUtils';
 
-
 export default function GigExpertRecruitmentPage() {
   const [applications, setApplications] = useState<GigExpertFeedback[]>([]);
   const [selectedApplication, setSelectedApplication] = useState<GigExpertFeedback | null>(null);
@@ -31,9 +30,13 @@ export default function GigExpertRecruitmentPage() {
   }, []);
 
   const filteredApplications = applications.filter((app) => {
-    const matchesSearch = app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const term = searchTerm.toLowerCase();
+    const nameMatch = (app.name || '').toLowerCase().includes(term);
+    const emailMatch = (app.email || '').toLowerCase().includes(term);
+    const matchesSearch = nameMatch || emailMatch;
+
     const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
+
     return matchesSearch && matchesStatus;
   });
 
@@ -48,36 +51,34 @@ export default function GigExpertRecruitmentPage() {
       setApplications((prev) => prev.map((app) => (app.id === id ? updated : app)));
     } catch (error) {
       console.error('Failed to update gigexpert status', error);
-      alert('Failed to update application status.');
+      alert('Failed to update status.');
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this application?')) return;
+    if (!confirm('Are you sure you want to delete this entry?')) return;
     try {
       await gigExpertFeedbackApi.remove(id);
       setApplications((prev) => prev.filter((app) => app.id !== id));
     } catch (error) {
-      console.error('Failed to delete gigexpert application', error);
-      alert('Failed to delete application.');
+      console.error('Failed to delete gigexpert entry', error);
+      alert('Failed to delete entry.');
     }
   };
 
   const getStatusBadge = (status: ApplicationStatus) => {
-    const statusClasses: Record<ApplicationStatus, string> = {
-      pending: 'badge-warning',
-      reviewing: 'badge-info',
-      approved: 'badge-success',
-      rejected: 'badge-danger',
-    };
-    return statusClasses[status] || 'badge-secondary';
+    const s = status?.toUpperCase();
+    if (s === 'PENDING') return 'badge-warning';
+    if (s === 'APPROVED') return 'badge-success';
+    if (s === 'REJECTED') return 'badge-danger';
+    return 'badge-secondary';
   };
 
   return (
     <AdminLayout>
       <div className="fade-in">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="header-title">GigExpert Feedback & Recruitment</h1>
+          <h1 className="header-title text-3xl font-extrabold text-emerald-900">GigExpert Feedback Pool</h1>
         </div>
 
         {/* Filters */}
@@ -85,8 +86,8 @@ export default function GigExpertRecruitmentPage() {
           <div className="flex-1 relative">
             <input
               type="text"
-              placeholder="Search by name or email..."
-              className="form-input pl-10"
+              placeholder="Search experts by name or email..."
+              className="form-input pl-10 h-12 shadow-sm focus:border-emerald-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -95,204 +96,230 @@ export default function GigExpertRecruitmentPage() {
 
           <div className="w-full md:w-64">
             <select
-              className="form-input"
+              className="form-input h-12 shadow-sm"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <option value="all">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="reviewing">Reviewing</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
+              <option value="all">All Feedback States</option>
+              <option value="PENDING">Pending Review</option>
+              <option value="APPROVED">Waitlisted / Approved</option>
+              <option value="REJECTED">Archived</option>
             </select>
           </div>
 
           <div className="flex gap-2 print:hidden">
             <button
-              className="btn btn-secondary"
+              className="btn btn-secondary h-12 px-6 flex items-center gap-2 border-emerald-100 text-emerald-700 hover:bg-emerald-50"
               onClick={() => downloadCSV(filteredApplications, 'gigexpert_feedback_all')}
-              title="Download filtered results as CSV"
             >
-              📊 Export All (CSV)
+              📊 Export CSV
             </button>
           </div>
         </div>
 
-
-
-        <div className="table-container">
+        <div className="table-container shadow-xl rounded-2xl overflow-hidden border-none bg-white">
           {loading ? (
-            <div className="p-8 text-center text-gray-500">Loading applications...</div>
+            <div className="p-12 text-center text-gray-400 font-medium animate-pulse">
+              Analyzing expert pool...
+            </div>
           ) : (
-            <table className="table">
-              <thead>
+            <table className="table w-full">
+              <thead className="bg-emerald-50/50 border-b border-emerald-100">
                 <tr>
-                  <th>Expert Name</th>
-                  <th>Type</th>
-                  <th>Experience</th>
-                  <th>Location</th>
-                  <th>Status</th>
-                  <th>Submission Date</th>
-                  <th>Actions</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-emerald-600">Expert Name</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-emerald-600">Classification</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-emerald-600">Experience</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-emerald-600">Status</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-emerald-600">Submitted</th>
+                  <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-widest text-emerald-600">Review</th>
                 </tr>
               </thead>
-              <tbody>
-                {filteredApplications.map((application) => (
-                  <tr key={application.id}>
-                    <td className="font-bold text-emerald-600">{application.name}</td>
-                    <td className="text-sm">{application.expertType}</td>
-                    <td>{application.experience}</td>
-                    <td>{application.location}</td>
-                    <td>
-                      <span className={`badge ${getStatusBadge(application.status)}`}>
-                        {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+              <tbody className="divide-y divide-gray-50">
+                {filteredApplications.map((app) => (
+                  <tr key={app.id} className="hover:bg-emerald-50/30 transition-colors">
+                    <td className="px-6 py-5 font-black text-emerald-800">{app.name}</td>
+                    <td className="px-6 py-5">
+                      <div className="font-semibold text-gray-700 text-sm">
+                        {app.expertType === 'Other' ? app.expertTypeOther : app.expertType}
+                      </div>
+                    </td>
+                    <td className="px-6 py-5 text-sm text-gray-600 font-bold">{app.experience}</td>
+                    <td className="px-6 py-5">
+                      <span className={`badge px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest ${getStatusBadge(app.status)}`}>
+                        {app.status}
                       </span>
                     </td>
-                    <td className="text-xs">{new Date(application.createdAt).toLocaleDateString()}</td>
-                    <td>
-                      <div className="flex gap-2">
-                        <button onClick={() => handleViewDetails(application)} className="btn btn-secondary btn-sm">
-                          View
+                    <td className="px-6 py-5 text-xs font-mono text-gray-400">
+                      {new Date(app.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex justify-center gap-2 items-center">
+                        <button onClick={() => handleViewDetails(app)} className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 p-2 rounded-lg transition-colors" title="View Full Details">
+                          view
                         </button>
                         <select
-                          value={application.status}
-                          onChange={(e) => handleStatusChange(application.id, e.target.value)}
-                          className="form-input text-xs"
-                          style={{ width: 'auto', padding: '0.15rem 0.35rem' }}
+                          value={app.status}
+                          onChange={(e) => handleStatusChange(app.id, e.target.value)}
+                          className="bg-white border border-gray-100 rounded-lg text-[10px] font-bold p-1 outline-none"
                         >
-                          <option value="pending">Pending</option>
-                          <option value="reviewing">Reviewing</option>
-                          <option value="approved">Approved</option>
-                          <option value="rejected">Rejected</option>
+                          <option value="PENDING">PENDING</option>
+                          <option value="APPROVED">APPROVED</option>
+                          <option value="REJECTED">REJECTED</option>
                         </select>
-                        <button onClick={() => handleDelete(application.id)} className="btn btn-danger btn-sm">
+                        <button onClick={() => handleDelete(app.id)} className="bg-red-50 text-red-500 hover:bg-red-100 p-2 rounded-lg transition-colors" title="Delete Entry">
                           Delete
                         </button>
                       </div>
                     </td>
                   </tr>
                 ))}
-                {filteredApplications.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="text-center py-8 text-gray-500 italic">No applications found matching your criteria.</td>
-                  </tr>
-                )}
               </tbody>
             </table>
+          )}
+          {!loading && filteredApplications.length === 0 && (
+            <div className="p-12 text-center text-gray-400 italic">No feedback entries matching your search.</div>
           )}
         </div>
 
         {showModal && selectedApplication && (
-          <div className="modal-overlay" onClick={() => setShowModal(false)}>
-            <div className="modal-content max-w-4xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header border-b pb-4 mb-6">
+          <div className="modal-overlay overflow-y-auto pt-10" onClick={() => setShowModal(false)}>
+            <div className="modal-content max-w-5xl mb-20 shadow-2xl rounded-[2.5rem] border-none flex flex-col" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header border-b p-10 flex justify-between items-center bg-gray-50/50 backdrop-blur-md sticky top-0 z-10">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-800">{selectedApplication.name}</h2>
-                  <p className="text-sm text-gray-500 italic">Submitted on {new Date(selectedApplication.createdAt).toLocaleString()}</p>
+                  <h2 className="text-3xl font-black text-gray-900 tracking-tight">{selectedApplication.name}</h2>
+                  <div className="flex gap-4 mt-2">
+                    <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-bold uppercase tracking-tighter">Status: {selectedApplication.status}</span>
+                    <span className="text-xs text-blue-500 font-bold uppercase tracking-widest">GigExpert Profile Review</span>
+                  </div>
                 </div>
-                <button onClick={() => setShowModal(false)} className="text-2xl text-gray-400 hover:text-gray-600">
+                <button onClick={() => setShowModal(false)} className="bg-white shadow-sm border border-gray-100 p-3 rounded-2xl text-gray-400 hover:text-gray-900 transition-all hover:scale-110">
                   ✕
                 </button>
               </div>
 
-              <div className="modal-body space-y-8">
-                {/* 1. Basic Info */}
+              <div className="modal-body p-10 space-y-12 overflow-y-auto">
+                {/* 1. Identity */}
                 <section>
-                  <h3 className="text-lg font-bold text-emerald-700 border-l-4 border-emerald-700 pl-3 mb-4 uppercase tracking-wider">Identity & Contact</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">Expert Name</label><p className="font-medium">{selectedApplication.name}</p></div>
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">Type</label><p className="font-medium">{selectedApplication.expertType === 'Other' ? selectedApplication.expertTypeOther : selectedApplication.expertType}</p></div>
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">Experience</label><p className="font-medium">{selectedApplication.experience}</p></div>
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">Email</label><p className="font-medium text-blue-600 underline">{selectedApplication.email}</p></div>
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">Phone</label><p className="font-medium">{selectedApplication.phone}</p></div>
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">Location</label><p className="font-medium">{selectedApplication.location}</p></div>
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="w-10 h-10 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-lg shadow-emerald-100">ID</div>
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">Identity & Expert Type</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                    <InfoItem label="Full Name" value={selectedApplication.name} />
+                    <InfoItem label="Expert Classification" value={selectedApplication.expertType === 'Other' ? selectedApplication.expertTypeOther : selectedApplication.expertType} />
+                    <InfoItem label="Professional Experience" value={selectedApplication.experience} />
+                    <InfoItem label="Contact Email" value={selectedApplication.email} isLink linkPrefix="mailto:" />
+                    <InfoItem label="Phone Number" value={selectedApplication.phone} />
+                    <InfoItem label="Primary Location" value={selectedApplication.location} />
                   </div>
                 </section>
 
-                {/* 2. Team & Capability */}
+                {/* 2. Team Capability */}
                 <section>
-                  <h3 className="text-lg font-bold text-emerald-700 border-l-4 border-emerald-700 pl-3 mb-4 uppercase tracking-wider">Team & Capability</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-lg">
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">Team Size</label><p className="font-medium">{selectedApplication.teamSize}</p></div>
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">Team Composition</label><p className="font-medium">{selectedApplication.teamComposition}</p></div>
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">Work Geography</label><p className="font-medium">{selectedApplication.workGeography}</p></div>
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">Design / Build</label><p className="font-medium">{selectedApplication.designOrBuild}</p></div>
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-lg shadow-blue-100">TC</div>
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">Team & Operational Capability</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-gray-50/50 p-8 rounded-[2.5rem] border border-gray-100">
+                    <InfoItem label="Active Team Size" value={selectedApplication.teamSize || 'Solo Contributor'} />
+                    <InfoItem label="Team Composition" value={selectedApplication.teamComposition || 'Not Specified'} />
+                    <InfoItem label="Operational Geography" value={selectedApplication.workGeography || 'Local'} />
+                    <InfoItem label="Primary Service Mode" value={selectedApplication.designOrBuild || 'Digital / Consultation'} />
                   </div>
                 </section>
 
                 {/* 3. Specializations */}
                 <section>
-                  <h3 className="text-lg font-bold text-emerald-700 border-l-4 border-emerald-700 pl-3 mb-4 uppercase tracking-wider">Specializations & Focus</h3>
-                  <div className="space-y-6">
-                    <div>
-                      <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">Gig Expert Types</label>
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-lg shadow-indigo-100">AF</div>
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">Areas of Focus & Expertise</h3>
+                  </div>
+                  <div className="space-y-10">
+                    <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm transition-all hover:border-emerald-200">
+                      <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-4">Gig Expert Categories</label>
                       <div className="flex flex-wrap gap-2">
-                        {selectedApplication.gigExpertTypes.map(type => (
-                          <span key={type} className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold uppercase">{type === 'Other' ? selectedApplication.gigExpertTypeOther : type}</span>
+                        {selectedApplication.gigExpertTypes.map((type, i) => (
+                          <span key={i} className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl text-[11px] font-black uppercase tracking-wider border border-emerald-100">
+                            {type === 'Other' ? selectedApplication.gigExpertTypeOther : type}
+                          </span>
                         ))}
                       </div>
                     </div>
-                    <div>
-                      <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">Project Types</label>
+
+                    <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm transition-all hover:border-blue-200">
+                      <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest block mb-4">Target Project Types</label>
                       <div className="flex flex-wrap gap-2">
-                        {selectedApplication.projectTypes.map(type => (
-                          <span key={type} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold uppercase">{type === 'Other' ? selectedApplication.projectTypeOther : type}</span>
+                        {selectedApplication.projectTypes.map((type, i) => (
+                          <span key={i} className="px-4 py-2 bg-blue-50 text-blue-700 rounded-xl text-[11px] font-black uppercase tracking-wider border border-blue-100">
+                            {type === 'Other' ? selectedApplication.projectTypeOther : type}
+                          </span>
                         ))}
                       </div>
                     </div>
-                    <div>
-                      <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">Key Work Areas</label>
-                      <p className="p-3 bg-white border rounded-md text-sm text-gray-700 whitespace-pre-line">{selectedApplication.keyWorkAreas}</p>
+
+                    <div className="bg-emerald-900 text-white p-10 rounded-[2.5rem] shadow-xl relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -mr-16 -mt-16"></div>
+                      <label className="text-[10px] font-black text-emerald-300 uppercase tracking-[0.3em] block mb-6">Execution Strategy / Key Work Areas</label>
+                      <p className="text-lg font-medium leading-relaxed italic opacity-90">
+                        "{selectedApplication.keyWorkAreas}"
+                      </p>
                     </div>
                   </div>
                 </section>
               </div>
 
-              <div className="modal-footer border-t pt-4 mt-8 flex justify-end gap-3 print:hidden">
-                <div className="flex-1 flex gap-2">
+              <div className="modal-footer p-10 border-t bg-white flex justify-between items-center px-14 rounded-b-[2.5rem]">
+                <div className="flex gap-4">
+                  <button onClick={() => triggerPrint()} className="footer-btn-emerald">🖨️ Professional PDF</button>
+                  <button onClick={() => downloadCSV([selectedApplication], `expert_${selectedApplication.name}`)} className="footer-btn-emerald">📊 Data Export</button>
+                </div>
+                <div className="flex gap-8 items-center">
+                  <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-900 font-black uppercase text-[10px] tracking-widest">Close Review</button>
                   <button
-                    onClick={() => downloadCSV([selectedApplication], `gigexpert_${selectedApplication.name.replace(/\s+/g, '_')}`)}
-                    className="btn btn-secondary btn-sm"
+                    onClick={() => handleStatusChange(selectedApplication.id, 'APPROVED')}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase text-[10px] tracking-[0.2em] py-5 px-12 rounded-2xl transition-all shadow-xl shadow-emerald-200 active:scale-95 disabled:opacity-50"
+                    disabled={selectedApplication.status === 'APPROVED'}
                   >
-                    📥 Download CSV
-                  </button>
-                  <button
-                    onClick={() => triggerPrint()}
-                    className="btn btn-secondary btn-sm"
-                  >
-                    📋 Print / Save PDF
+                    {selectedApplication.status === 'APPROVED' ? 'WAITLISTED' : 'APPROVE TO POOL'}
                   </button>
                 </div>
-                <button onClick={() => handleStatusChange(selectedApplication.id, 'approved')} className="btn btn-primary" disabled={selectedApplication.status === 'approved'}>
-                  {selectedApplication.status === 'approved' ? 'Already Approved' : 'Approve Expert'}
-                </button>
-                <button onClick={() => setShowModal(false)} className="btn btn-secondary">
-                  Close Review
-                </button>
               </div>
-
             </div>
           </div>
         )}
       </div>
+
+      <style jsx>{`
+        .footer-btn-emerald {
+             font-size: 10px;
+             font-weight: 900;
+             text-transform: uppercase;
+             letter-spacing: 0.1em;
+             padding: 14px 22px;
+             border: 1px solid #f1f5f9;
+             border-radius: 16px;
+             background: #fff;
+             color: #64748b;
+             transition: all 0.2s;
+        }
+        .footer-btn-emerald:hover {
+            background: #f8fafc;
+            border-color: #ecfdf5;
+            color: #059669;
+        }
+      `}</style>
     </AdminLayout>
   );
 }
 
-// Add print-specific styles to hide everything except the modal content when printing
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style');
-  style.innerHTML = `
-    @media print {
-      body * { visibility: hidden; }
-      .modal-overlay, .modal-overlay * { visibility: visible; }
-      .modal-overlay { position: absolute; left: 0; top: 0; width: 100%; background: white !important; }
-      .modal-content { box-shadow: none !important; border: none !important; width: 100% !important; max-width: none !important; }
-      .sidebar, .header, .print:hidden, .btn, .modal-footer button, .modal-header button { display: none !important; }
-      .modal-body { padding: 0 !important; }
-      .header-title { display: block !important; visibility: visible !important; }
-    }
-  `;
-  document.head.appendChild(style);
+function InfoItem({ label, value, subValue, isLink, linkPrefix, mono }: any) {
+  return (
+    <div>
+      <label className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] block mb-3">{label}</label>
+      <div className={`text-xl font-bold truncate leading-none ${mono ? 'font-mono text-emerald-600 text-sm' : 'text-gray-800'}`}>
+        {isLink ? <a href={(linkPrefix || '') + value} target="_blank" className="text-blue-600 hover:underline">{value || '-'}</a> : (value || '-')}
+      </div>
+      {subValue && <div className="text-[11px] text-gray-400 mt-2 font-medium truncate italic">{subValue}</div>}
+    </div>
+  );
 }
-

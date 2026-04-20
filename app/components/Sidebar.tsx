@@ -29,24 +29,21 @@ export default function Sidebar() {
     { id: 'dashboard', label: 'Dashboard', icon: '📊', href: '/dashboard' },
     { id: 'projects', label: 'Projects', icon: '🏗️', href: '/projects' },
     { id: 'case-studies', label: 'Case Studies', icon: '📋', href: '/case-studies' },
-    { id: 'our-expertise', label: 'Our Expertise', icon: '🛠️', href: '/our-expertise' },
-    { id: 'youtube-videos', label: 'YouTube Videos', icon: '▶️', href: '/youtube-videos' },
-
-    // ✅ Recruitment Dropdown
-    {
-      id: 'recruitment',
-      label: 'Recruitment',
-      icon: '🏢',
+    
+    { 
+      id: 'recruitment', 
+      label: 'Recruitment', 
+      icon: '🤝',
       children: [
-        { id: 'agency', label: 'Agency', icon: '🏢', href: '/recruitment/agency' },
-        { id: 'freelancer', label: 'Freelancer', icon: '🧑‍💻', href: '/recruitment/freelancer' },
-      ],
+        { id: 'agency-rec', label: 'Agency', icon: '🏢', href: '/recruitment/agency' },
+        { id: 'freelancer-rec', label: 'Freelancer', icon: '👤', href: '/recruitment/freelancer' },
+      ]
     },
-
-
-    { id: 'admins', label: 'Admins', icon: '👥', href: '/admins' },
     { id: 'gigexpert', label: 'GigExpert Feedback', icon: '🌟', href: '/gigexpert' },
 
+    { id: 'our-expertise', label: 'Our Expertise', icon: '🛠️', href: '/our-expertise' },
+    { id: 'youtube-videos', label: 'YouTube Videos', icon: '▶️', href: '/youtube-videos' },
+    { id: 'admins', label: 'Admins', icon: '👥', href: '/admins' },
   ];
 
   const filteredMenuItems = menuItems.filter(item => {
@@ -93,7 +90,7 @@ export default function Sidebar() {
               <>
                 {/* 🔹 Parent Dropdown */}
                 <div
-                  className="nav-item"
+                  className={`nav-item ${openDropdown === item.id ? 'active' : ''}`}
                   onClick={() =>
                     setOpenDropdown(openDropdown === item.id ? null : item.id)
                   }
@@ -101,25 +98,26 @@ export default function Sidebar() {
                 >
                   <span className="nav-icon">{item.icon}</span>
                   {item.label}
+                  <span className="ml-auto text-[10px] opacity-50">{openDropdown === item.id ? '▼' : '▶'}</span>
                 </div>
 
 
                 {/* 🔹 Dropdown Items */}
                 {openDropdown === item.id && (
-                  <div style={{ paddingLeft: '20px' }}>
+                  <div className="bg-gray-50/50 rounded-xl mx-2 mb-2 overflow-hidden transition-all">
                     {item.children.map((child) => (
                       <a
                         key={child.id}
                         href={child.href}
-                        className={`nav-item ${pathname === child.href ? 'active' : ''}`}
+                        className={`nav-item text-sm py-2 ${pathname === child.href ? 'active' : ''}`}
                         onClick={(e) => {
                           e.preventDefault();
                           setActiveItem(child.id);
                           window.location.href = child.href!;
                         }}
-
+                        style={{ paddingLeft: '40px' }}
                       >
-                        <span className="nav-icon">{child.icon}</span>
+                        <span className="nav-icon text-xs">{child.icon}</span>
                         {child.label}
                       </a>
                     ))}

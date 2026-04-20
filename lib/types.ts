@@ -35,92 +35,172 @@ export interface YouTubeVideo {
 }
 
 
-export type ApplicationStatus = 'pending' | 'reviewing' | 'approved' | 'rejected';
+export type ApplicationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export enum LODLevel {
+  LOD_300 = 'LOD_300',
+  LOD_350 = 'LOD_350',
+  LOD_400 = 'LOD_400',
+  LOD_500 = 'LOD_500'
+}
+
+export enum Specialization {
+  STRUCTURAL = 'STRUCTURAL',
+  MEP = 'MEP',
+  ARCHITECTURAL = 'ARCHITECTURAL',
+  FIRE_LIFE_SAFETY = 'FIRE_LIFE_SAFETY'
+}
+
+export enum MeasurementStandard {
+  IS_1200 = 'IS_1200',
+  RICS = 'RICS',
+  NRM2 = 'NRM2',
+  SMM7 = 'SMM7'
+}
+
+export enum HardwareCapacity {
+  RENDER_FARM = 'RENDER_FARM',
+  HIGH_END_GPU = 'HIGH_END_GPU',
+  CLOUD_RENDERING = 'CLOUD_RENDERING',
+  STANDARD_WORKSTATION = 'STANDARD_WORKSTATION'
+}
+
+export enum SoftwareType {
+  REVIT = 'REVIT',
+  AUTOCAD = 'AUTOCAD',
+  NAVISWORKS = 'NAVISWORKS',
+  TEKLA = 'TEKLA',
+  CIVIL_3D = 'CIVIL_3D'
+}
+
+export enum EquipmentType {
+  LASER_SCANNER = 'LASER_SCANNER',
+  TOTAL_STATION = 'TOTAL_STATION',
+  DRONE = 'DRONE'
+}
+
+export enum RenderingEngine {
+  VRAY = 'VRAY',
+  CORONA = 'CORONA',
+  LUMION = 'LUMION',
+  UNREAL_ENGINE = 'UNREAL_ENGINE'
+}
 
 export interface AgencyApplication {
   id: string;
-  
+  createdAt: string;
+  updatedAt: string;
+
   // 1. Identity & Accountability
-  authPersonName: string;
+  authorizedPerson: string;
   designation: string;
   linkedinUrl?: string | null;
   headquarters: string;
   website?: string | null;
-  email?: string | null;
-  phone?: string | null;
 
   // 2. Legal & Tax Identity
-  registeredName: string;
+  companyName: string;
   gstNumber?: string | null;
   cin?: string | null;
-  companyPan?: string | null;
+  pan?: string | null;
 
-  // 3. Services
-  selectedServices: string[];
-  bimDetails?: any;
-  auditDetails?: any;
-  peerReviewDetails?: any;
-  boqDetails?: any;
-  vizDetails?: any;
+  // 3. Service Selection (Flags)
+  providesBIM: boolean;
+  providesAsBuiltAudit: boolean;
+  providesPeerReview: boolean;
+  providesBOQ: boolean;
+  provides3DRendering: boolean;
+
+  // Technical Details
+  bimSoftwares: SoftwareType[];
+  lodCapability?: LODLevel | null;
+  cdeExperience?: string | null;
+  
+  equipmentOwned: EquipmentType[];
+  serviceRadius?: string | null;
+
+  totalExperience?: number | null;
+  specialization?: Specialization | null;
+
+  measurementStandard?: MeasurementStandard | null;
+  estimationSoftware?: string | null;
+
+  renderingEngines: RenderingEngine[];
+  hardwareCapacity?: HardwareCapacity | null;
+  animationCapability?: boolean | null;
 
   // 4. Evidence & Commercials
   portfolioUrl?: string | null;
-  commercialBasis: string;
-  baseRate?: string | null;
-  noticePeriod: string;
-  teamSize?: string | null;
+  portfolioPdfUrl?: string | null;
+  commercialBasis?: string | null;
+  baseRate?: number | null;
+  leadTime?: string | null;
+  teamSize?: number | null;
 
-  // 5. Final Declaration
-  declarationAccepted: boolean;
-  signatureName: string;
-  submissionDate: string;
+  // 5. Declaration
+  isVerified: boolean;
+  signature?: string | null;
+  declarationDate?: string | null;
 
-  // Administrative
+  // Admin
   status: ApplicationStatus;
-  createdAt: string;
-  updatedAt: string;
 }
-
 
 export interface FreelancerApplication {
   id: string;
-  
+  createdAt: string;
+  updatedAt: string;
+
   // 1. Identity & Accountability
   fullName: string;
   designation: string;
   linkedinUrl?: string | null;
   location: string;
-  email?: string | null;
-  phone?: string | null;
 
   // 2. Legal & Tax Identity
-  legalNamePan?: string | null;
-  personalPan?: string | null;
+  legalName: string;
+  pan?: string | null;
 
-  // 3. Services
-  selectedServices: string[];
-  bimDetails?: any;
-  auditDetails?: any;
-  peerReviewDetails?: any;
-  boqDetails?: any;
-  vizDetails?: any;
+  // 3. Services (Flags)
+  providesBIM: boolean;
+  providesAsBuiltAudit: boolean;
+  providesPeerReview: boolean;
+  providesBOQ: boolean;
+  provides3DRendering: boolean;
 
-  // 4. Evidence & Commercials
+  // Technical Details
+  bimSoftwares: SoftwareType[];
+  lodCapability?: LODLevel | null;
+  cdeExperience?: string | null;
+  
+  equipmentOwned: EquipmentType[];
+  serviceRadius?: string | null;
+
+  totalExperience?: number | null;
+  specialization?: Specialization | null;
+
+  measurementStandard?: MeasurementStandard | null;
+  estimationSoftware?: string | null;
+
+  renderingEngines: RenderingEngine[];
+  hardwareCapacity?: HardwareCapacity | null;
+  animationCapability?: boolean | null;
+
+  // 4. Commercials
   portfolioUrl?: string | null;
-  commercialBasis: string;
-  baseRate?: string | null;
-  noticePeriod: string;
-  availability: string;
+  portfolioPdfUrl?: string | null;
+  commercialBasis?: string | null;
+  baseRate?: number | null;
+  leadTime?: string | null;
+  availability?: string | null;
 
-  // 5. Final Declaration
-  declarationAccepted: boolean;
-  signatureName: string;
-  submissionDate: string;
+  // 5. Declaration
+  isVerified: boolean;
+  signature?: string | null;
+  declarationDate?: string | null;
 
-  // Administrative
+  // Admin
   status: ApplicationStatus;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface GigExpertFeedback {

@@ -6,7 +6,6 @@ import { agencyRecruitmentApi } from '../../../lib/api';
 import { AgencyApplication, ApplicationStatus } from '../../../lib/types';
 import { downloadCSV, triggerPrint } from '../../../lib/exportUtils';
 
-
 export default function AgencyRecruitmentPage() {
   const [applications, setApplications] = useState<AgencyApplication[]>([]);
   const [selectedApplication, setSelectedApplication] = useState<AgencyApplication | null>(null);
@@ -31,9 +30,10 @@ export default function AgencyRecruitmentPage() {
   }, []);
 
   const filteredApplications = applications.filter((app) => {
-    const matchesSearch =
-      app.registeredName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.authPersonName.toLowerCase().includes(searchTerm.toLowerCase());
+    const term = searchTerm.toLowerCase();
+    const nameMatch = (app.companyName || '').toLowerCase().includes(term);
+    const personMatch = (app.authorizedPerson || '').toLowerCase().includes(term);
+    const matchesSearch = nameMatch || personMatch;
 
     const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
 
@@ -66,36 +66,19 @@ export default function AgencyRecruitmentPage() {
     }
   };
 
-  const getStatusBadge = (status: ApplicationStatus) => {
-    const statusClasses: Record<ApplicationStatus, string> = {
-      pending: 'badge-warning',
-      reviewing: 'badge-info',
-      approved: 'badge-success',
-      rejected: 'badge-danger',
-    };
-    return statusClasses[status] || 'badge-secondary';
-  };
-
-  // Helper to render JSON or Object details nicely
-  const renderDetails = (data: any) => {
-    if (!data || Object.keys(data).length === 0) return <span className="text-gray-400 italic">No details provided</span>;
-    return (
-      <div className="bg-gray-50 p-3 rounded-md text-sm">
-        {Object.entries(data).map(([key, value]) => (
-          <div key={key} className="mb-1">
-            <span className="font-semibold text-gray-600 capitalize">{key.replace(/([A-Z])/g, ' $1')}: </span>
-            <span>{typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}</span>
-          </div>
-        ))}
-      </div>
-    );
+  const getStatusBadge = (status: string) => {
+    const s = status?.toUpperCase();
+    if (s === 'PENDING') return 'badge-warning';
+    if (s === 'APPROVED') return 'badge-success';
+    if (s === 'REJECTED') return 'badge-danger';
+    return 'badge-secondary';
   };
 
   return (
     <AdminLayout>
       <div className="fade-in">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="header-title">Agency Recruitment Applications</h1>
+          <h1 className="header-title text-3xl font-extrabold text-blue-900">Agency Applications</h1>
         </div>
 
         {/* Filters */}
@@ -103,8 +86,8 @@ export default function AgencyRecruitmentPage() {
           <div className="flex-1 relative">
             <input
               type="text"
-              placeholder="Search by name..."
-              className="form-input pl-10"
+              placeholder="Search by company or person..."
+              className="form-input pl-10 h-12 shadow-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -113,251 +96,339 @@ export default function AgencyRecruitmentPage() {
 
           <div className="w-full md:w-64">
             <select
-              className="form-input"
+              className="form-input h-12 shadow-sm"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="all">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="reviewing">Reviewing</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
+              <option value="PENDING">Pending</option>
+              <option value="APPROVED">Approved</option>
+              <option value="REJECTED">Rejected</option>
             </select>
           </div>
 
           <div className="flex gap-2 print:hidden">
             <button
-              className="btn btn-secondary"
+              className="btn btn-secondary h-12 px-6 flex items-center gap-2"
               onClick={() => downloadCSV(filteredApplications, 'agency_applications_all')}
-              title="Download filtered results as CSV"
             >
-              📊 Export All (CSV)
+              📊 Export CSV
             </button>
           </div>
         </div>
 
-
-        <div className="table-container">
+        <div className="table-container shadow-xl rounded-2xl overflow-hidden border-none bg-white">
           {loading ? (
-            <div className="p-8 text-center text-gray-500">Loading applications...</div>
+            <div className="p-12 text-center text-gray-400 font-medium">
+              <div className="animate-pulse flex flex-col items-center">
+                <div className="w-12 h-12 bg-gray-100 rounded-full mb-4"></div>
+                Loading application pool...
+              </div>
+            </div>
           ) : (
-            <table className="table">
-              <thead>
+            <table className="table w-full">
+              <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  <th>Registered Name</th>
-                  <th>Auth Person</th>
-                  <th>Designation</th>
-                  <th>LinkedIn</th>
-                  <th>Status</th>
-                  <th>Submission Date</th>
-                  <th>Actions</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Company Name</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Contact Person</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Location</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Status</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400">Applied On</th>
+                  <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-widest text-gray-400">Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                {filteredApplications.map((application) => (
-                  <tr key={application.id}>
-                    <td className="font-bold text-blue-600">{application.registeredName}</td>
-                    <td>{application.authPersonName}</td>
-                    <td className="text-sm">{application.designation}</td>
-                    <td>
-                      {application.linkedinUrl ? (
-                        <a href={application.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                          Profile 🔗
-                        </a>
-                      ) : '-'}
+              <tbody className="divide-y divide-gray-50">
+                {filteredApplications.map((app) => (
+                  <tr key={app.id} className="hover:bg-blue-50/30 transition-colors">
+                    <td className="px-6 py-5 font-bold text-blue-800">{app.companyName}</td>
+                    <td className="px-6 py-5">
+                      <div className="font-semibold text-gray-700">{app.authorizedPerson}</div>
+                      <div className="text-[11px] text-gray-400 uppercase font-bold tracking-tighter">{app.designation}</div>
                     </td>
-                    <td>
-                      <span className={`badge ${getStatusBadge(application.status)}`}>
-                        {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+                    <td className="px-6 py-5 text-sm text-gray-600">{app.headquarters}</td>
+                    <td className="px-6 py-5">
+                      <span className={`badge px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest ${getStatusBadge(app.status)}`}>
+                        {app.status}
                       </span>
                     </td>
-                    <td className="text-xs">{new Date(application.submissionDate).toLocaleDateString()}</td>
-                    <td>
-                      <div className="flex gap-2">
-                        <button onClick={() => handleViewDetails(application)} className="btn btn-secondary btn-sm">
+                    <td className="px-6 py-5 text-xs font-mono text-gray-400">
+                      {new Date(app.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex justify-center gap-2 items-center">
+                        <button onClick={() => handleViewDetails(app)} className="bg-blue-100 text-blue-700 hover:bg-blue-200 p-2 rounded-lg transition-colors" title="View Details">
                           View
                         </button>
                         <select
-                          value={application.status}
-                          onChange={(e) => handleStatusChange(application.id, e.target.value)}
-                          className="form-input text-xs"
-                          style={{ width: 'auto', padding: '0.15rem 0.35rem' }}
+                          value={app.status}
+                          onChange={(e) => handleStatusChange(app.id, e.target.value)}
+                          className="bg-white border border-gray-200 rounded-lg text-[10px] font-bold p-1 outline-none focus:border-blue-500"
                         >
-                          <option value="pending">Pending</option>
-                          <option value="reviewing">Reviewing</option>
-                          <option value="approved">Approved</option>
-                          <option value="rejected">Rejected</option>
+                          <option value="PENDING">PENDING</option>
+                          <option value="APPROVED">APPROVED</option>
+                          <option value="REJECTED">REJECTED</option>
                         </select>
-                        <button onClick={() => handleDelete(application.id)} className="btn btn-danger btn-sm">
+                        <button onClick={() => handleDelete(app.id)} className="bg-red-50 text-red-500 hover:bg-red-100 p-2 rounded-lg transition-colors" title="Delete">
                           Delete
                         </button>
                       </div>
                     </td>
                   </tr>
                 ))}
-                {filteredApplications.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="text-center py-8 text-gray-500 italic">No applications found matching your criteria.</td>
-                  </tr>
-                )}
               </tbody>
             </table>
+          )}
+          {!loading && filteredApplications.length === 0 && (
+            <div className="p-12 text-center text-gray-400 italic">No applications found in this category.</div>
           )}
         </div>
 
         {showModal && selectedApplication && (
-          <div className="modal-overlay" onClick={() => setShowModal(false)}>
-            <div className="modal-content max-w-4xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header border-b pb-4 mb-6">
+          <div className="modal-overlay overflow-y-auto pt-10" onClick={() => setShowModal(false)}>
+            <div className="modal-content max-w-5xl mb-20 shadow-2xl rounded-3xl" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header border-b p-8 flex justify-between items-center bg-gray-50/50 backdrop-blur-md sticky top-0 z-10">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-800">{selectedApplication.registeredName}</h2>
-                  <p className="text-sm text-gray-500 italic">Submitted on {new Date(selectedApplication.submissionDate).toLocaleString()}</p>
+                  <h2 className="text-3xl font-black text-gray-900 tracking-tight">{selectedApplication.companyName}</h2>
+                  <div className="flex gap-4 mt-2">
+                    <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded font-mono uppercase">ID: {selectedApplication.id.split('-')[0]}..</span>
+                    <span className="text-xs text-blue-500 font-bold uppercase tracking-widest">Agency Recruitment</span>
+                  </div>
                 </div>
-                <button onClick={() => setShowModal(false)} className="text-2xl text-gray-400 hover:text-gray-600">
+                <button onClick={() => setShowModal(false)} className="bg-white shadow-sm border border-gray-100 p-2 rounded-xl text-gray-400 hover:text-gray-900 transition-all hover:scale-110 active:scale-95">
                   ✕
                 </button>
               </div>
 
-              <div className="modal-body space-y-8">
-                {/* 1. Identity & Accountability */}
+              <div className="modal-body p-10 space-y-12">
+                {/* 1. Identity */}
                 <section>
-                  <h3 className="text-lg font-bold text-blue-700 border-l-4 border-blue-700 pl-3 mb-4 uppercase tracking-wider">Identity & Accountability</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">Auth Person</label><p className="font-medium">{selectedApplication.authPersonName}</p></div>
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">Designation</label><p className="font-medium">{selectedApplication.designation}</p></div>
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">Headquarters</label><p className="font-medium">{selectedApplication.headquarters}</p></div>
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">Email</label><p className="font-medium text-blue-600 underline">{selectedApplication.email || 'N/A'}</p></div>
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">Phone</label><p className="font-medium">{selectedApplication.phone || 'N/A'}</p></div>
-                    <div>
-                      <label className="text-xs font-bold text-gray-400 uppercase">Website</label>
-                      <p className="font-medium">
-                        {selectedApplication.website ? <a href={selectedApplication.website} target="_blank" className="text-blue-500 underline">Visit Website</a> : 'N/A'}
-                      </p>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">01</div>
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">Identity & Accountability</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                    <InfoItem label="Authorised Person" value={selectedApplication.authorizedPerson} subValue={selectedApplication.designation} />
+                    <InfoItem label="LinkedIn Profile" value={selectedApplication.linkedinUrl || 'N/A'} isLink={!!selectedApplication.linkedinUrl} />
+                    <InfoItem label="Company Website" value={selectedApplication.website || 'N/A'} isLink={!!selectedApplication.website} subValue={selectedApplication.headquarters} />
+                  </div>
+                </section>
+
+                {/* 2. Legal */}
+                <section>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">02</div>
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">Legal & Tax Identity</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-gray-50/50 p-8 rounded-3xl border border-gray-100">
+                    <InfoItem label="Entity Name" value={selectedApplication.companyName} />
+                    <InfoItem label="GST Number" value={selectedApplication.gstNumber || 'N/A'} mono />
+                    <InfoItem label="PAN ID" value={selectedApplication.pan || 'N/A'} mono />
+                    <InfoItem label="CIN Number" value={selectedApplication.cin || 'N/A'} mono />
+                  </div>
+                </section>
+
+                {/* 3. Tech Vetting */}
+                <section>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">03</div>
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">Service Selection & Technical Vetting</h3>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {selectedApplication.providesBIM && (
+                      <VettingCard
+                        title="BIM & Drafting"
+                        color="blue"
+                        icon="🏗️"
+                        details={[
+                          { label: 'LOD Capability', value: selectedApplication.lodCapability },
+                          { label: 'Software Stack', value: selectedApplication.bimSoftwares?.join(', ') },
+                          { label: 'CDE Experience', value: selectedApplication.cdeExperience }
+                        ]}
+                      />
+                    )}
+
+                    {selectedApplication.providesAsBuiltAudit && (
+                      <VettingCard
+                        title="As-Built Audit"
+                        color="green"
+                        icon="📏"
+                        details={[
+                          { label: 'Service Scope', value: selectedApplication.serviceRadius },
+                          { label: 'Equipment List', value: selectedApplication.equipmentOwned?.join(', ') }
+                        ]}
+                      />
+                    )}
+
+                    {selectedApplication.providesPeerReview && (
+                      <VettingCard
+                        title="Peer Review"
+                        color="purple"
+                        icon="🔍"
+                        details={[
+                          { label: 'Specialization', value: selectedApplication.specialization },
+                          { label: 'Total Team Exp', value: selectedApplication.totalExperience ? `${selectedApplication.totalExperience} Professionals` : null }
+                        ]}
+                      />
+                    )}
+
+                    {selectedApplication.providesBOQ && (
+                      <VettingCard
+                        title="BOQ & Cost Monitoring"
+                        color="yellow"
+                        icon="📊"
+                        details={[
+                          { label: 'Standards', value: selectedApplication.measurementStandard },
+                          { label: 'Estimating Software', value: selectedApplication.estimationSoftware }
+                        ]}
+                      />
+                    )}
+
+                    {selectedApplication.provides3DRendering && (
+                      <VettingCard
+                        title="3D Visualisation"
+                        color="indigo"
+                        icon="🎨"
+                        details={[
+                          { label: 'Rendering Engines', value: selectedApplication.renderingEngines?.join(', ') },
+                          { label: 'Processing Hardware', value: selectedApplication.hardwareCapacity },
+                          { label: 'Animation Ready', value: selectedApplication.animationCapability ? 'Yes' : 'No' }
+                        ]}
+                      />
+                    )}
+                  </div>
+                </section>
+
+                {/* 4. Portfolio */}
+                <section>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-8 h-8 bg-yellow-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">04</div>
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">Evidence & Commercials</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-8 bg-blue-50/30 rounded-3xl border border-blue-50">
+                    <InfoItem label="Commercial Basis" value={selectedApplication.commercialBasis?.replace('_', ' ')} />
+                    <InfoItem label="Base Rate Quote" value={selectedApplication.baseRate ? `${selectedApplication.baseRate} INR` : 'N/A'} />
+                    <InfoItem label="Standard Lead Time" value={selectedApplication.leadTime?.replace('_', ' ')} />
+                    <div className="md:col-span-3 pt-6 border-t border-blue-100 mt-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-4">Portfolio / Work Samples</label>
+                      <div className="flex flex-wrap gap-4">
+                        {selectedApplication.portfolioUrl && (
+                          <a href={selectedApplication.portfolioUrl} target="_blank" className="portfolio-link-premium">
+                            <span className="text-lg">📂</span>
+                            <div>
+                              <div className="font-bold text-gray-900">External Resource</div>
+                              <div className="text-[10px] text-gray-500 uppercase font-black">Link Provided</div>
+                            </div>
+                          </a>
+                        )}
+                        {selectedApplication.portfolioPdfUrl && (
+                          <a href={selectedApplication.portfolioPdfUrl} target="_blank" className="portfolio-link-premium bg-blue-600 text-white border-blue-600 hover:shadow-lg hover:shadow-blue-200">
+                            <span className="text-lg">📄</span>
+                            <div>
+                              <div className="font-bold">Portfolio PDF</div>
+                              <div className="text-[10px] text-blue-200 uppercase font-black">Hosted File</div>
+                            </div>
+                          </a>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </section>
 
-                {/* 2. Legal & Tax Identity */}
-                <section>
-                  <h3 className="text-lg font-bold text-blue-700 border-l-4 border-blue-700 pl-3 mb-4 uppercase tracking-wider">Legal & Tax Identity</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-gray-50 p-4 rounded-lg">
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">GST Number</label><p className="font-mono text-sm">{selectedApplication.gstNumber || 'N/A'}</p></div>
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">CIN</label><p className="font-mono text-sm">{selectedApplication.cin || 'N/A'}</p></div>
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">Company PAN</label><p className="font-mono text-sm">{selectedApplication.companyPan || 'N/A'}</p></div>
+                {/* 5. Declaration */}
+                <section className="bg-gradient-to-br from-gray-900 to-blue-900 text-white p-10 rounded-[2.5rem] flex flex-col md:flex-row justify-between items-center gap-10 overflow-hidden relative shadow-2xl">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+                  <div className="relative z-10">
+                    <h4 className="text-blue-300 text-[10px] font-black uppercase tracking-[0.3em] mb-4">Digitally Signed Declaration</h4>
+                    <p className="text-3xl font-serif italic leading-relaxed">"{selectedApplication.signature || selectedApplication.authorizedPerson}"</p>
+                    <p className="text-[10px] text-gray-400 mt-6 tracking-widest uppercase font-bold">Authenticated Submission on {new Date(selectedApplication.createdAt).toLocaleString()}</p>
                   </div>
-                </section>
-
-                {/* 3. Service Specializations */}
-                <section>
-                  <h3 className="text-lg font-bold text-blue-700 border-l-4 border-blue-700 pl-3 mb-4 uppercase tracking-wider">Service Specializations</h3>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {selectedApplication.selectedServices.map(service => (
-                      <span key={service} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold uppercase">{service}</span>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="border rounded-lg p-3">
-                      <h4 className="font-bold text-sm mb-2 text-gray-700">Digital Construction & BIM</h4>
-                      {renderDetails(selectedApplication.bimDetails)}
-                    </div>
-                    <div className="border rounded-lg p-3">
-                      <h4 className="font-bold text-sm mb-2 text-gray-700">Audit & Vetting</h4>
-                      {renderDetails(selectedApplication.auditDetails)}
-                    </div>
-                    <div className="border rounded-lg p-3">
-                      <h4 className="font-bold text-sm mb-2 text-gray-700">Peer Review</h4>
-                      {renderDetails(selectedApplication.peerReviewDetails)}
-                    </div>
-                    <div className="border rounded-lg p-3">
-                      <h4 className="font-bold text-sm mb-2 text-gray-700">BOQ & Cost Monitoring</h4>
-                      {renderDetails(selectedApplication.boqDetails)}
-                    </div>
-                    <div className="border rounded-lg p-3 md:col-span-2">
-                      <h4 className="font-bold text-sm mb-2 text-gray-700">3D Visualization</h4>
-                      {renderDetails(selectedApplication.vizDetails)}
-                    </div>
-                  </div>
-                </section>
-
-                {/* 4. Evidence & Commercials */}
-                <section>
-                  <h3 className="text-lg font-bold text-blue-700 border-l-4 border-blue-700 pl-3 mb-4 uppercase tracking-wider">Evidence & Commercials</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">Commercial Basis</label><p className="font-medium">{selectedApplication.commercialBasis}</p></div>
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">Base Rate</label><p className="font-medium">{selectedApplication.baseRate || 'N/A'}</p></div>
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">Notice Period</label><p className="font-medium">{selectedApplication.noticePeriod}</p></div>
-                    <div><label className="text-xs font-bold text-gray-400 uppercase">Team Size</label><p className="font-medium">{selectedApplication.teamSize || 'N/A'}</p></div>
-                    <div className="md:col-span-2">
-                      <label className="text-xs font-bold text-gray-400 uppercase">Portfolio/Evidence</label>
-                      {selectedApplication.portfolioUrl ? (
-                        <a href={selectedApplication.portfolioUrl} target="_blank" className="block p-2 bg-blue-50 text-blue-700 rounded border border-blue-200 mt-1 text-center font-bold">
-                          View Portfolio 🔗
-                        </a>
-                      ) : <p className="text-gray-400">No portfolio provided</p>}
-                    </div>
-                  </div>
-                </section>
-
-                <section className="bg-orange-50 p-4 rounded-lg border border-orange-100">
-                  <h3 className="text-sm font-bold text-orange-700 mb-2 uppercase tracking-wider">Declaration & Signature</h3>
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-sm text-gray-700">Signed by: <span className="font-bold font-serif underline">{selectedApplication.signatureName}</span></p>
-                      <p className="text-xs text-gray-500 mt-1">Application ID: {selectedApplication.id}</p>
-                    </div>
-                    <div className={selectedApplication.declarationAccepted ? 'text-green-600' : 'text-red-600'}>
-                      {selectedApplication.declarationAccepted ? '✓ Declaration Accepted' : '✗ Declaration Declined'}
-                    </div>
+                  <div className="flex flex-col items-center relative z-10 bg-white/10 p-6 rounded-3xl backdrop-blur-xl border border-white/10 min-w-[180px]">
+                    <div className={`w-3 h-3 rounded-full mb-3 shadow-lg ${selectedApplication.isVerified ? 'bg-green-400 shadow-green-500/50' : 'bg-yellow-400 shadow-yellow-500/50'}`}></div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-center">{selectedApplication.isVerified ? 'Identity Verified' : 'Self-Certified'}</p>
+                    {selectedApplication.status === 'APPROVED' && <div className="mt-4 text-green-300 font-bold text-xs">✓ APPROVED</div>}
                   </div>
                 </section>
               </div>
 
-              <div className="modal-footer border-t pt-4 mt-8 flex justify-end gap-3 print:hidden">
-                <div className="flex-1 flex gap-2">
+              <div className="modal-footer p-8 border-t bg-white flex justify-between items-center px-12 sticky bottom-0 z-10">
+                <div className="flex gap-4">
+                  <button onClick={() => triggerPrint()} className="bg-white hover:bg-gray-50 text-gray-700 font-bold text-xs uppercase p-4 rounded-2xl border border-gray-100 transition-all active:scale-95">🖨️ PDF Report</button>
+                  <button onClick={() => downloadCSV([selectedApplication], `agency_${selectedApplication.companyName}`)} className="bg-white hover:bg-gray-50 text-gray-700 font-bold text-xs uppercase p-4 rounded-2xl border border-gray-100 transition-all active:scale-95">📊 Dataset Export</button>
+                </div>
+                <div className="flex gap-6 items-center">
+                  <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-900 font-black uppercase text-[10px] tracking-widest">Discard review</button>
                   <button
-                    onClick={() => downloadCSV([selectedApplication], `agency_app_${selectedApplication.registeredName.replace(/\s+/g, '_')}`)}
-                    className="btn btn-secondary btn-sm"
+                    onClick={() => handleStatusChange(selectedApplication.id, 'APPROVED')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-[10px] tracking-widest py-5 px-10 rounded-2xl transition-all shadow-xl shadow-blue-200 active:scale-95 disabled:opacity-50"
+                    disabled={selectedApplication.status === 'APPROVED'}
                   >
-                    📥 Download CSV
-                  </button>
-                  <button
-                    onClick={() => triggerPrint()}
-                    className="btn btn-secondary btn-sm"
-                  >
-                    📋 Print / Save PDF
+                    {selectedApplication.status === 'APPROVED' ? 'Application Approved' : 'Finalize Approval'}
                   </button>
                 </div>
-                <button onClick={() => handleStatusChange(selectedApplication.id, 'approved')} className="btn btn-primary" disabled={selectedApplication.status === 'approved'}>
-                  {selectedApplication.status === 'approved' ? 'Already Approved' : 'Approve Agency'}
-                </button>
-                <button onClick={() => setShowModal(false)} className="btn btn-secondary">
-                  Close Review
-                </button>
               </div>
-
             </div>
           </div>
         )}
       </div>
+
+      <style jsx>{`
+        .portfolio-link-premium {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: 12px 24px;
+          background: white;
+          border: 1px solid #f1f5f9;
+          border-radius: 16px;
+          min-width: 220px;
+          transition: all 0.3s;
+          text-decoration: none;
+        }
+        .portfolio-link-premium:hover {
+            transform: translateY(-4px);
+            border-color: #3b82f6;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.04);
+        }
+      `}</style>
     </AdminLayout>
   );
 }
 
-// Add print-specific styles to hide everything except the modal content when printing
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style');
-  style.innerHTML = `
-    @media print {
-      body * { visibility: hidden; }
-      .modal-overlay, .modal-overlay * { visibility: visible; }
-      .modal-overlay { position: absolute; left: 0; top: 0; width: 100%; background: white !important; }
-      .modal-content { box-shadow: none !important; border: none !important; width: 100% !important; max-width: none !important; }
-      .sidebar, .header, .print:hidden, .btn, .modal-footer button, .modal-header button { display: none !important; }
-      .modal-body { padding: 0 !important; }
-      .header-title { display: block !important; visibility: visible !important; }
-    }
-  `;
-  document.head.appendChild(style);
+function InfoItem({ label, value, subValue, isLink, linkPrefix, mono }: any) {
+  return (
+    <div>
+      <label className="text-[10px] font-black text-gray-300 uppercase tracking-widest block mb-2">{label}</label>
+      <div className={`text-lg font-bold truncate leading-none ${mono ? 'font-mono uppercase text-sm text-blue-600' : 'text-gray-800'}`}>
+        {isLink ? <a href={(linkPrefix || '') + value} target="_blank" className="text-blue-600 hover:underline">{value || '-'}</a> : (value || '-')}
+      </div>
+      {subValue && <div className="text-[11px] text-gray-400 mt-2 font-medium truncate">{subValue}</div>}
+    </div>
+  );
 }
 
+function VettingCard({ title, color, icon, details }: any) {
+  const colorMap: any = {
+    blue: 'border-blue-100 bg-blue-50/30 text-blue-900',
+    green: 'border-green-100 bg-green-50/30 text-green-900',
+    purple: 'border-purple-100 bg-purple-50/30 text-purple-900',
+    yellow: 'border-yellow-100 bg-yellow-50/30 text-yellow-900',
+    indigo: 'border-indigo-100 bg-indigo-50/30 text-indigo-900',
+  };
 
+  return (
+    <div className={`p-8 rounded-[2rem] border ${colorMap[color]} transition-all duration-500 hover:shadow-xl hover:shadow-gray-100/50`}>
+      <div className="flex justify-between items-start mb-6">
+        <h4 className="font-black text-[10px] uppercase tracking-[0.2em] opacity-40">{title}</h4>
+        <span className="text-xl">{icon}</span>
+      </div>
+      <div className="space-y-5">
+        {details.map((d: any, i: number) => d.value && (
+          <div key={i}>
+            <label className="text-[10px] uppercase font-black opacity-30 block mb-1">{d.label}</label>
+            <p className="text-sm font-bold">{d.value}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
