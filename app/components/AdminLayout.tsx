@@ -4,9 +4,14 @@ import { useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useUser } from './UserContext';
+import AuthWrapper from './AuthWrapper';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return <LayoutContent>{children}</LayoutContent>;
+  return (
+    <AuthWrapper>
+      <LayoutContent>{children}</LayoutContent>
+    </AuthWrapper>
+  );
 }
 
 function LayoutContent({ children }: { children: React.ReactNode }) {

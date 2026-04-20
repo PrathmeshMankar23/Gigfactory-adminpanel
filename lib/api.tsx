@@ -7,10 +7,11 @@ import {
   FreelancerApplication,
   GigExpertFeedback,
   Admin,
+  Enquiry,
 } from './types';
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://gigfactory-backend.onrender.com/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
 
 async function parseErrorResponse(response: Response): Promise<string> {
   const fallback = `Request failed with status ${response.status}`;
@@ -111,7 +112,9 @@ export const adminsApi = {
 };
 
 export const enquiryApi = {
-  send: (payload: any) => apiRequest<void>('/enquiry', { method: 'POST', body: JSON.stringify(payload) }),
+  list: () => apiRequest<Enquiry[]>('/enquiries'),
+  send: (payload: any) => apiRequest<void>('/enquiries/enquiry', { method: 'POST', body: JSON.stringify(payload) }),
+  remove: (id: string | number) => apiRequest<void>(`/enquiries/${id}`, { method: 'DELETE' }),
 };
 
 export const uploadApi = {

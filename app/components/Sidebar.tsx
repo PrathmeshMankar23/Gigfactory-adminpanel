@@ -43,15 +43,22 @@ export default function Sidebar() {
 
     { id: 'our-expertise', label: 'Our Expertise', icon: '🛠️', href: '/our-expertise' },
     { id: 'youtube-videos', label: 'YouTube Videos', icon: '▶️', href: '/youtube-videos' },
+    { id: 'enquiries', label: 'Enquiries', icon: '📩', href: '/enquiries' },
     { id: 'admins', label: 'Admins', icon: '👥', href: '/admins' },
   ];
 
   const filteredMenuItems = menuItems.filter(item => {
-    if (item.id === 'admins' && user?.role !== 'SUPER_ADMIN') {
+    if ((item.id === 'admins' || item.id === 'enquiries') && user?.role !== 'SUPER_ADMIN') {
       return false;
     }
     return true;
   });
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('adminEmail');
+    window.location.href = '/login';
+  };
 
   return (
     <div className="sidebar">
@@ -128,6 +135,17 @@ export default function Sidebar() {
           </div>
         ))}
       </nav>
+
+      {/* Logout Button */}
+      <div className="mt-auto p-4 border-t border-zinc-100/10">
+        <button
+          onClick={handleLogout}
+          className="nav-item w-full text-red-400 hover:text-red-300 hover:bg-red-500/10"
+        >
+          <span className="nav-icon">🚪</span>
+          Logout
+        </button>
+      </div>
     </div>
   );
 }

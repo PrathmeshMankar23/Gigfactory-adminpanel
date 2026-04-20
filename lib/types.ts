@@ -229,10 +229,20 @@ export interface GigExpertFeedback {
 }
 
 export interface Admin {
-
   id: string | number;
   name: string;
   email: string;
   role: string;
   password?: string;
+}
+
+export interface Enquiry {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  companyName?: string | null;
+  message: string;
+  createdAt: string;
+  updatedAt: string;
 }
