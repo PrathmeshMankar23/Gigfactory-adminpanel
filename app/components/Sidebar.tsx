@@ -29,10 +29,10 @@ export default function Sidebar() {
     { id: 'dashboard', label: 'Dashboard', icon: '📊', href: '/dashboard' },
     { id: 'projects', label: 'Projects', icon: '🏗️', href: '/projects' },
     { id: 'case-studies', label: 'Case Studies', icon: '📋', href: '/case-studies' },
-    
-    { 
-      id: 'recruitment', 
-      label: 'Recruitment', 
+
+    {
+      id: 'recruitment',
+      label: 'Recruitment',
       icon: '🤝',
       children: [
         { id: 'agency-rec', label: 'Agency', icon: '🏢', href: '/recruitment/agency' },
@@ -43,7 +43,6 @@ export default function Sidebar() {
 
     { id: 'our-expertise', label: 'Our Expertise', icon: '🛠️', href: '/our-expertise' },
     { id: 'youtube-videos', label: 'YouTube Videos', icon: '▶️', href: '/youtube-videos' },
-    { id: 'enquiries', label: 'Enquiries', icon: '📩', href: '/enquiries' },
     { id: 'admins', label: 'Admins', icon: '👥', href: '/admins' },
   ];
 
@@ -64,11 +63,11 @@ export default function Sidebar() {
     <div className="sidebar">
       <div className="sidebar-logo-container">
         <a href="/dashboard" className="flex items-center justify-center w-full">
-          <img 
-            src="/GIG.png" 
-            alt="Gigfactory Logo" 
+          <img
+            src="/GIG.png"
+            alt="Gigfactory Logo"
             className="sidebar-logo"
-            style={{ maxWidth: '180px', height: 'auto', display: 'block' }} 
+            style={{ maxWidth: '180px', height: 'auto', display: 'block' }}
           />
         </a>
       </div>

@@ -78,7 +78,7 @@ export default function GigExpertRecruitmentPage() {
     <AdminLayout>
       <div className="fade-in">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="header-title text-3xl font-extrabold text-emerald-900">GigExpert Feedback Pool</h1>
+          <h1 className="header-title text-3xl font-extrabold text-emerald-900">GigExpert Feedback</h1>
         </div>
 
         {/* Filters */}
@@ -206,27 +206,29 @@ export default function GigExpertRecruitmentPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                     <InfoItem label="Full Name" value={selectedApplication.name} />
-                    <InfoItem label="Expert Classification" value={selectedApplication.expertType === 'Other' ? selectedApplication.expertTypeOther : selectedApplication.expertType} />
-                    <InfoItem label="Professional Experience" value={selectedApplication.experience} />
-                    <InfoItem label="Contact Email" value={selectedApplication.email} isLink linkPrefix="mailto:" />
-                    <InfoItem label="Phone Number" value={selectedApplication.phone} />
-                    <InfoItem label="Primary Location" value={selectedApplication.location} />
+                    {selectedApplication.expertType && <InfoItem label="Expert Classification" value={selectedApplication.expertType === 'Other' ? selectedApplication.expertTypeOther : selectedApplication.expertType} />}
+                    {selectedApplication.experience && <InfoItem label="Professional Experience" value={selectedApplication.experience} />}
+                    {selectedApplication.email && <InfoItem label="Contact Email" value={selectedApplication.email} isLink linkPrefix="mailto:" />}
+                    {selectedApplication.phone && <InfoItem label="Phone Number" value={selectedApplication.phone} />}
+                    {selectedApplication.location && <InfoItem label="Primary Location" value={selectedApplication.location} />}
                   </div>
                 </section>
 
-                {/* 2. Team Capability */}
-                <section>
-                  <div className="flex items-center gap-3 mb-8">
-                    <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-lg shadow-blue-100">TC</div>
-                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">Team & Operational Capability</h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-gray-50/50 p-8 rounded-[2.5rem] border border-gray-100">
-                    <InfoItem label="Active Team Size" value={selectedApplication.teamSize || 'Solo Contributor'} />
-                    <InfoItem label="Team Composition" value={selectedApplication.teamComposition || 'Not Specified'} />
-                    <InfoItem label="Operational Geography" value={selectedApplication.workGeography || 'Local'} />
-                    <InfoItem label="Primary Service Mode" value={selectedApplication.designOrBuild || 'Digital / Consultation'} />
-                  </div>
-                </section>
+                {/* 2. Team Capability (Conditional) */}
+                {(selectedApplication.teamSize || selectedApplication.teamComposition || selectedApplication.workGeography || selectedApplication.designOrBuild) && (
+                  <section>
+                    <div className="flex items-center gap-3 mb-8">
+                      <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-lg shadow-blue-100">TC</div>
+                      <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">Team & Operational Capability</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-gray-50/50 p-8 rounded-[2.5rem] border border-gray-100">
+                      {selectedApplication.teamSize && <InfoItem label="Active Team Size" value={selectedApplication.teamSize} />}
+                      {selectedApplication.teamComposition && <InfoItem label="Team Composition" value={selectedApplication.teamComposition} />}
+                      {selectedApplication.workGeography && <InfoItem label="Operational Geography" value={selectedApplication.workGeography} />}
+                      {selectedApplication.designOrBuild && <InfoItem label="Primary Service Mode" value={selectedApplication.designOrBuild} />}
+                    </div>
+                  </section>
+                )}
 
                 {/* 3. Specializations */}
                 <section>
@@ -235,35 +237,41 @@ export default function GigExpertRecruitmentPage() {
                     <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">Areas of Focus & Expertise</h3>
                   </div>
                   <div className="space-y-10">
-                    <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm transition-all hover:border-emerald-200">
-                      <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-4">Gig Expert Categories</label>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedApplication.gigExpertTypes.map((type, i) => (
-                          <span key={i} className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl text-[11px] font-black uppercase tracking-wider border border-emerald-100">
-                            {type === 'Other' ? selectedApplication.gigExpertTypeOther : type}
-                          </span>
-                        ))}
+                    {selectedApplication.gigExpertTypes?.length > 0 && (
+                      <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm transition-all hover:border-emerald-200">
+                        <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-4">Gig Expert Categories</label>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedApplication.gigExpertTypes.map((type: string, i: number) => (
+                            <span key={i} className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl text-[11px] font-black uppercase tracking-wider border border-emerald-100">
+                              {type === 'Other' ? selectedApplication.gigExpertTypeOther : type}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
-                    <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm transition-all hover:border-blue-200">
-                      <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest block mb-4">Target Project Types</label>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedApplication.projectTypes.map((type, i) => (
-                          <span key={i} className="px-4 py-2 bg-blue-50 text-blue-700 rounded-xl text-[11px] font-black uppercase tracking-wider border border-blue-100">
-                            {type === 'Other' ? selectedApplication.projectTypeOther : type}
-                          </span>
-                        ))}
+                    {selectedApplication.projectTypes?.length > 0 && (
+                      <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm transition-all hover:border-blue-200">
+                        <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest block mb-4">Target Project Types</label>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedApplication.projectTypes.map((type: string, i: number) => (
+                            <span key={i} className="px-4 py-2 bg-blue-50 text-blue-700 rounded-xl text-[11px] font-black uppercase tracking-wider border border-blue-100">
+                              {type === 'Other' ? selectedApplication.projectTypeOther : type}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
-                    <div className="bg-emerald-900 text-white p-10 rounded-[2.5rem] shadow-xl relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -mr-16 -mt-16"></div>
-                      <label className="text-[10px] font-black text-emerald-300 uppercase tracking-[0.3em] block mb-6">Execution Strategy / Key Work Areas</label>
-                      <p className="text-lg font-medium leading-relaxed italic opacity-90">
-                        "{selectedApplication.keyWorkAreas}"
-                      </p>
-                    </div>
+                    {selectedApplication.keyWorkAreas && (
+                      <div className="bg-emerald-900 text-white p-10 rounded-[2.5rem] shadow-xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -mr-16 -mt-16"></div>
+                        <label className="text-[10px] font-black text-emerald-300 uppercase tracking-[0.3em] block mb-6">Execution Strategy / Key Work Areas</label>
+                        <p className="text-lg font-medium leading-relaxed italic opacity-90">
+                          "{selectedApplication.keyWorkAreas}"
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </section>
               </div>

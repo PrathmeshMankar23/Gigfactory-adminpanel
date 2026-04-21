@@ -207,25 +207,27 @@ export default function AgencyRecruitmentPage() {
                     <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">Identity & Accountability</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                    <InfoItem label="Authorised Person" value={selectedApplication.authorizedPerson} subValue={selectedApplication.designation} />
-                    <InfoItem label="LinkedIn Profile" value={selectedApplication.linkedinUrl || 'N/A'} isLink={!!selectedApplication.linkedinUrl} />
-                    <InfoItem label="Company Website" value={selectedApplication.website || 'N/A'} isLink={!!selectedApplication.website} subValue={selectedApplication.headquarters} />
+                    {selectedApplication.authorizedPerson && <InfoItem label="Authorised Person" value={selectedApplication.authorizedPerson} subValue={selectedApplication.designation} />}
+                    {selectedApplication.linkedinUrl && <InfoItem label="LinkedIn Profile" value="Profile Link" isLink linkPrefix="" linkValue={selectedApplication.linkedinUrl} />}
+                    {selectedApplication.website && <InfoItem label="Company Website" value="Visit Site" isLink linkPrefix="" linkValue={selectedApplication.website} subValue={selectedApplication.headquarters} />}
                   </div>
                 </section>
 
-                {/* 2. Legal */}
-                <section>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">02</div>
-                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">Legal & Tax Identity</h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-gray-50/50 p-8 rounded-3xl border border-gray-100">
-                    <InfoItem label="Entity Name" value={selectedApplication.companyName} />
-                    <InfoItem label="GST Number" value={selectedApplication.gstNumber || 'N/A'} mono />
-                    <InfoItem label="PAN ID" value={selectedApplication.pan || 'N/A'} mono />
-                    <InfoItem label="CIN Number" value={selectedApplication.cin || 'N/A'} mono />
-                  </div>
-                </section>
+                {/* 2. Legal (Conditional) */}
+                {(selectedApplication.gstNumber || selectedApplication.pan || selectedApplication.cin) && (
+                  <section>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">02</div>
+                      <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">Legal & Tax Identity</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-gray-50/50 p-8 rounded-3xl border border-gray-100">
+                      <InfoItem label="Entity Name" value={selectedApplication.companyName} />
+                      {selectedApplication.gstNumber && <InfoItem label="GST Number" value={selectedApplication.gstNumber} mono />}
+                      {selectedApplication.pan && <InfoItem label="PAN ID" value={selectedApplication.pan} mono />}
+                      {selectedApplication.cin && <InfoItem label="CIN Number" value={selectedApplication.cin} mono />}
+                    </div>
+                  </section>
+                )}
 
                 {/* 3. Tech Vetting */}
                 <section>
@@ -241,7 +243,7 @@ export default function AgencyRecruitmentPage() {
                         icon="🏗️"
                         details={[
                           { label: 'LOD Capability', value: selectedApplication.lodCapability },
-                          { label: 'Software Stack', value: selectedApplication.bimSoftwares?.join(', ') },
+                          { label: 'Software Stack', value: selectedApplication.bimSoftwares },
                           { label: 'CDE Experience', value: selectedApplication.cdeExperience }
                         ]}
                       />
@@ -254,7 +256,7 @@ export default function AgencyRecruitmentPage() {
                         icon="📏"
                         details={[
                           { label: 'Service Scope', value: selectedApplication.serviceRadius },
-                          { label: 'Equipment List', value: selectedApplication.equipmentOwned?.join(', ') }
+                          { label: 'Equipment List', value: selectedApplication.equipmentOwned }
                         ]}
                       />
                     )}
@@ -266,7 +268,7 @@ export default function AgencyRecruitmentPage() {
                         icon="🔍"
                         details={[
                           { label: 'Specialization', value: selectedApplication.specialization },
-                          { label: 'Total Team Exp', value: selectedApplication.totalExperience ? `${selectedApplication.totalExperience} Professionals` : null }
+                          { label: 'Total Team Exp', value: selectedApplication.totalExperience }
                         ]}
                       />
                     )}
@@ -289,7 +291,7 @@ export default function AgencyRecruitmentPage() {
                         color="indigo"
                         icon="🎨"
                         details={[
-                          { label: 'Rendering Engines', value: selectedApplication.renderingEngines?.join(', ') },
+                          { label: 'Rendering Engines', value: selectedApplication.renderingEngines },
                           { label: 'Processing Hardware', value: selectedApplication.hardwareCapacity },
                           { label: 'Animation Ready', value: selectedApplication.animationCapability ? 'Yes' : 'No' }
                         ]}
@@ -305,32 +307,35 @@ export default function AgencyRecruitmentPage() {
                     <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">Evidence & Commercials</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-8 bg-blue-50/30 rounded-3xl border border-blue-50">
-                    <InfoItem label="Commercial Basis" value={selectedApplication.commercialBasis?.replace('_', ' ')} />
-                    <InfoItem label="Base Rate Quote" value={selectedApplication.baseRate ? `${selectedApplication.baseRate} INR` : 'N/A'} />
-                    <InfoItem label="Standard Lead Time" value={selectedApplication.leadTime?.replace('_', ' ')} />
-                    <div className="md:col-span-3 pt-6 border-t border-blue-100 mt-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-4">Portfolio / Work Samples</label>
-                      <div className="flex flex-wrap gap-4">
-                        {selectedApplication.portfolioUrl && (
-                          <a href={selectedApplication.portfolioUrl} target="_blank" className="portfolio-link-premium">
-                            <span className="text-lg">📂</span>
-                            <div>
-                              <div className="font-bold text-gray-900">External Resource</div>
-                              <div className="text-[10px] text-gray-500 uppercase font-black">Link Provided</div>
-                            </div>
-                          </a>
-                        )}
-                        {selectedApplication.portfolioPdfUrl && (
-                          <a href={selectedApplication.portfolioPdfUrl} target="_blank" className="portfolio-link-premium bg-blue-600 text-white border-blue-600 hover:shadow-lg hover:shadow-blue-200">
-                            <span className="text-lg">📄</span>
-                            <div>
-                              <div className="font-bold">Portfolio PDF</div>
-                              <div className="text-[10px] text-blue-200 uppercase font-black">Hosted File</div>
-                            </div>
-                          </a>
-                        )}
+                    {selectedApplication.commercialBasis && <InfoItem label="Commercial Basis" value={selectedApplication.commercialBasis} />}
+                    {selectedApplication.baseRate && <InfoItem label="Base Rate Quote" value={`${selectedApplication.baseRate} INR`} />}
+                    {selectedApplication.leadTime && <InfoItem label="Standard Lead Time" value={selectedApplication.leadTime} />}
+                    
+                    {(selectedApplication.portfolioUrl || selectedApplication.portfolioPdfUrl) && (
+                      <div className="md:col-span-3 pt-6 border-t border-blue-100 mt-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-4">Portfolio / Work Samples</label>
+                        <div className="flex flex-wrap gap-4">
+                          {selectedApplication.portfolioUrl && (
+                            <a href={selectedApplication.portfolioUrl} target="_blank" className="portfolio-link-premium">
+                              <span className="text-lg">📂</span>
+                              <div>
+                                <div className="font-bold text-gray-900">External Resource</div>
+                                <div className="text-[10px] text-gray-500 uppercase font-black">Link Provided</div>
+                              </div>
+                            </a>
+                          )}
+                          {selectedApplication.portfolioPdfUrl && (
+                            <a href={selectedApplication.portfolioPdfUrl} target="_blank" className="portfolio-link-premium bg-blue-600 text-white border-blue-600 hover:shadow-lg hover:shadow-blue-200">
+                              <span className="text-lg">📄</span>
+                              <div>
+                                <div className="font-bold">Portfolio PDF</div>
+                                <div className="text-[10px] text-blue-200 uppercase font-black">Hosted File</div>
+                              </div>
+                            </a>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </section>
 
@@ -394,12 +399,12 @@ export default function AgencyRecruitmentPage() {
   );
 }
 
-function InfoItem({ label, value, subValue, isLink, linkPrefix, mono }: any) {
+function InfoItem({ label, value, subValue, isLink, linkPrefix, linkValue, mono }: any) {
   return (
     <div>
       <label className="text-[10px] font-black text-gray-300 uppercase tracking-widest block mb-2">{label}</label>
       <div className={`text-lg font-bold truncate leading-none ${mono ? 'font-mono uppercase text-sm text-blue-600' : 'text-gray-800'}`}>
-        {isLink ? <a href={(linkPrefix || '') + value} target="_blank" className="text-blue-600 hover:underline">{value || '-'}</a> : (value || '-')}
+        {isLink ? <a href={(linkPrefix || '') + (linkValue || value)} target="_blank" className="text-blue-600 hover:underline">{value || '-'}</a> : (value || '-')}
       </div>
       {subValue && <div className="text-[11px] text-gray-400 mt-2 font-medium truncate">{subValue}</div>}
     </div>

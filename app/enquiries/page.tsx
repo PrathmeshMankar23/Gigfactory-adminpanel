@@ -103,7 +103,7 @@ export default function EnquiriesPage() {
               <tbody className="divide-y divide-gray-50">
                 {filteredEnquiries.map((enq) => (
                   <tr key={enq.id} className="hover:bg-blue-50/30 transition-colors">
-                    <td className="px-6 py-5 font-bold text-blue-800">{enq.name || 'Anonymous'}</td>
+                    <td className="px-6 py-5 font-bold text-blue-800">{enq.name || '-'}</td>
                     <td className="px-6 py-5 text-gray-600">{enq.companyName || '-'}</td>
                     <td className="px-6 py-5 text-gray-600">{enq.email}</td>
                     <td className="px-6 py-5 text-xs font-mono text-gray-400">
@@ -142,10 +142,18 @@ export default function EnquiriesPage() {
 
               <div className="modal-body p-10 space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Company</label>
-                    <p className="text-lg font-bold text-gray-800">{selectedEnquiry.companyName || 'Not Provided'}</p>
-                  </div>
+                  {selectedEnquiry.name && (
+                    <div>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Company</label>
+                      <p className="text-lg font-bold text-gray-800">{selectedEnquiry.name}</p>
+                    </div>
+                  )}
+                  {selectedEnquiry.companyName && (
+                    <div>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Company</label>
+                      <p className="text-lg font-bold text-gray-800">{selectedEnquiry.companyName}</p>
+                    </div>
+                  )}
                   <div>
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Submission Date</label>
                     <p className="text-lg font-bold text-gray-800">{new Date(selectedEnquiry.createdAt).toLocaleString()}</p>
@@ -157,18 +165,22 @@ export default function EnquiriesPage() {
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Email</label>
                     <p className="text-lg font-bold text-blue-600">{selectedEnquiry.email}</p>
                   </div>
-                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Phone</label>
-                    <p className="text-lg font-bold text-gray-800">{selectedEnquiry.phone || 'Not Provided'}</p>
-                  </div>
+                  {selectedEnquiry.phone && (
+                    <div>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Phone</label>
+                      <p className="text-lg font-bold text-gray-800">{selectedEnquiry.phone}</p>
+                    </div>
+                  )}
                 </div>
 
-                <div className="pt-6 border-t border-gray-100">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3">Message Content</label>
-                  <div className="bg-gray-50 p-6 rounded-2xl text-gray-700 leading-relaxed whitespace-pre-wrap italic">
-                    "{selectedEnquiry.message}"
+                {selectedEnquiry.message && (
+                  <div className="pt-6 border-t border-gray-100">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3">Message Content</label>
+                    <div className="bg-gray-50 p-6 rounded-2xl text-gray-700 leading-relaxed whitespace-pre-wrap italic">
+                      "{selectedEnquiry.message}"
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               <div className="modal-footer p-8 border-t bg-gray-50 flex justify-end gap-4 px-10 rounded-b-3xl">

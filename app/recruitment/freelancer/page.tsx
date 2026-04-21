@@ -205,23 +205,25 @@ export default function FreelancerRecruitmentPage() {
                     <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">Professional Identity</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                    <InfoItem label="Full Name" value={selectedApplication.fullName} subValue={selectedApplication.designation} />
-                    <InfoItem label="LinkedIn Profile" value={selectedApplication.linkedinUrl || 'N/A'} isLink={!!selectedApplication.linkedinUrl} linkValue={selectedApplication.linkedinUrl} />
-                    <InfoItem label="Current Location" value={selectedApplication.location} />
+                    {selectedApplication.fullName && <InfoItem label="Full Name" value={selectedApplication.fullName} subValue={selectedApplication.designation} />}
+                    {selectedApplication.linkedinUrl && <InfoItem label="LinkedIn Profile" value="Profile Link" isLink linkPrefix="" linkValue={selectedApplication.linkedinUrl} />}
+                    {selectedApplication.location && <InfoItem label="Current Location" value={selectedApplication.location} />}
                   </div>
                 </section>
 
-                {/* 2. Legal */}
-                <section>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">02</div>
-                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">Legal & Tax Identity</h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50/50 p-8 rounded-3xl border border-gray-100">
-                    <InfoItem label="Legal Name" value={selectedApplication.legalName || 'N/A'} />
-                    <InfoItem label="PAN ID" value={selectedApplication.pan || 'N/A'} mono />
-                  </div>
-                </section>
+                {/* 2. Legal (Conditional) */}
+                {(selectedApplication.legalName || selectedApplication.pan) && (
+                  <section>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">02</div>
+                      <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">Legal & Tax Identity</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50/50 p-8 rounded-3xl border border-gray-100">
+                      {selectedApplication.legalName && <InfoItem label="Legal Name" value={selectedApplication.legalName} />}
+                      {selectedApplication.pan && <InfoItem label="PAN ID" value={selectedApplication.pan} mono />}
+                    </div>
+                  </section>
+                )}
 
                 {/* 3. Tech Vetting */}
                 <section>
@@ -237,7 +239,7 @@ export default function FreelancerRecruitmentPage() {
                         icon="🏗️"
                         details={[
                           { label: 'LOD Capability', value: selectedApplication.lodCapability },
-                          { label: 'Software Stack', value: selectedApplication.bimSoftwares?.join(', ') },
+                          { label: 'Software Stack', value: selectedApplication.bimSoftwares },
                           { label: 'CDE Experience', value: selectedApplication.cdeExperience }
                         ]}
                       />
@@ -250,7 +252,7 @@ export default function FreelancerRecruitmentPage() {
                         icon="📏"
                         details={[
                           { label: 'Service Scope', value: selectedApplication.serviceRadius },
-                          { label: 'Equipment List', value: selectedApplication.equipmentOwned?.join(', ') }
+                          { label: 'Equipment List', value: selectedApplication.equipmentOwned }
                         ]}
                       />
                     )}
@@ -262,7 +264,7 @@ export default function FreelancerRecruitmentPage() {
                         icon="🔍"
                         details={[
                           { label: 'Specialization', value: selectedApplication.specialization },
-                          { label: 'Professional Exp', value: selectedApplication.totalExperience ? `${selectedApplication.totalExperience} Years` : null }
+                          { label: 'Professional Exp', value: selectedApplication.totalExperience }
                         ]}
                       />
                     )}
@@ -285,7 +287,7 @@ export default function FreelancerRecruitmentPage() {
                         color="indigo"
                         icon="🎨"
                         details={[
-                          { label: 'Rendering Engines', value: selectedApplication.renderingEngines?.join(', ') },
+                          { label: 'Rendering Engines', value: selectedApplication.renderingEngines },
                           { label: 'Processing Hardware', value: selectedApplication.hardwareCapacity },
                           { label: 'Animation Ready', value: selectedApplication.animationCapability ? 'Yes' : 'No' }
                         ]}
@@ -301,37 +303,36 @@ export default function FreelancerRecruitmentPage() {
                     <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">Commercial Availability</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-8 bg-purple-50/30 rounded-3xl border border-purple-50">
-                    <InfoItem label="Commercial Basis" value={selectedApplication.commercialBasis?.replace('_', ' ')} />
-                    <InfoItem label="Base Rate Quote" value={selectedApplication.baseRate ? `${selectedApplication.baseRate} INR` : 'N/A'} />
-                    <InfoItem label="Notice / Lead Time" value={selectedApplication.leadTime?.replace('_', ' ')} />
-                    <InfoItem label="Current Availability" value={selectedApplication.availability || 'Not Specified'} />
+                    {selectedApplication.commercialBasis && <InfoItem label="Commercial Basis" value={selectedApplication.commercialBasis} />}
+                    {selectedApplication.baseRate && <InfoItem label="Base Rate Quote" value={`${selectedApplication.baseRate} INR`} />}
+                    {selectedApplication.leadTime && <InfoItem label="Notice / Lead Time" value={selectedApplication.leadTime} />}
+                    {selectedApplication.availability && <InfoItem label="Current Availability" value={selectedApplication.availability} />}
 
-                    <div className="md:col-span-3 pt-6 border-t border-purple-100 mt-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-4">Evidence of Work</label>
-                      <div className="flex flex-wrap gap-4">
-                        {selectedApplication.portfolioUrl && (
-                          <a href={selectedApplication.portfolioUrl} target="_blank" className="portfolio-link-premium">
-                            <span className="text-lg">📂</span>
-                            <div>
-                              <div className="font-bold text-gray-900 text-sm">External Resource</div>
-                              <div className="text-[10px] text-gray-500 uppercase font-black">Open Link</div>
-                            </div>
-                          </a>
-                        )}
-                        {selectedApplication.portfolioPdfUrl && (
-                          <a href={selectedApplication.portfolioPdfUrl} target="_blank" className="portfolio-link-premium bg-purple-600 text-white border-purple-600 hover:shadow-lg hover:shadow-purple-200">
-                            <span className="text-lg">📄</span>
-                            <div>
-                              <div className="font-bold text-sm">Portfolio PDF</div>
-                              <div className="text-[10px] text-purple-200 uppercase font-black">Hosted File</div>
-                            </div>
-                          </a>
-                        )}
-                        {!selectedApplication.portfolioUrl && !selectedApplication.portfolioPdfUrl && (
-                          <p className="text-gray-400 italic text-sm">No portfolio resources attached</p>
-                        )}
+                    {(selectedApplication.portfolioUrl || selectedApplication.portfolioPdfUrl) && (
+                      <div className="md:col-span-3 pt-6 border-t border-purple-100 mt-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-4">Evidence of Work</label>
+                        <div className="flex flex-wrap gap-4">
+                          {selectedApplication.portfolioUrl && (
+                            <a href={selectedApplication.portfolioUrl} target="_blank" className="portfolio-link-premium">
+                              <span className="text-lg">📂</span>
+                              <div>
+                                <div className="font-bold text-gray-900 text-sm">External Resource</div>
+                                <div className="text-[10px] text-gray-500 uppercase font-black">Open Link</div>
+                              </div>
+                            </a>
+                          )}
+                          {selectedApplication.portfolioPdfUrl && (
+                            <a href={selectedApplication.portfolioPdfUrl} target="_blank" className="portfolio-link-premium bg-purple-600 text-white border-purple-600 hover:shadow-lg hover:shadow-purple-200">
+                              <span className="text-lg">📄</span>
+                              <div>
+                                <div className="font-bold text-sm">Portfolio PDF</div>
+                                <div className="text-[10px] text-purple-200 uppercase font-black">Hosted File</div>
+                              </div>
+                            </a>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </section>
 
